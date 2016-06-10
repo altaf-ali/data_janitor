@@ -1,0 +1,124 @@
+---
+title: "Data Reshape Example"
+output: html_document
+---
+
+```{r echo=FALSE}
+library(printr)
+```
+
+```{r message=FALSE}
+library(dplyr)
+library(tidyr)
+```
+
+Create a small dataset to test the reshape code.
+
+```{r}
+events <- data_frame(
+  event_id = c(1001, 1002, 1003),
+  side_a = c("blue", "red", "green"),
+  side_b = c("red", "green", "blue"),
+  outcome = c("victory", "victory", "peace"),
+  winner = c(1, 2, 1)
+)
+```
+
+The data we start with has three events:
+
+```{r}
+events
+```
+
+We reshape based on who won. The steps are:
+
+1. Create two new binary variables `side_a_won` and `side_b_won` that indicate whether each side won
+1. Gather the newly created variables into a a key-value pair of `side` and `win_status` variables
+1. Modify the `side` variable to include the name of the actor
+1. Create two separate variables `victory` and `peace` from the `outcome` variable
+1. Optional: Select only the columns we care about
+1. Optional: Use `arrange()` to make sure the resulting dataframe maintains the same order as the initial
+
+```{r}
+events %>%
+  mutate(side_a_won = winner == 1, 
+         side_b_won = winner == 2) %>%
+  gather(side, win_status, side_a_won, side_b_won)  %>%
+  mutate(side = ifelse(side == "side_a_won", side_a, side_b)) %>%
+  mutate(victory = outcome == "victory", 
+         peace = outcome == "peace") %>%
+  select(event_id, side, win_status, victory, peace) %>%
+  arrange(event_id)
+```  
+
+And finally we get two observations for each event but a single actor per observation with their victory and outcome status.
+
+Let's walk through each step one at a time:
+
+1\. Create two new binary variables `side_a_won` and `side_b_won` that indicate whether each side won
+
+```{r}
+events %>%
+  mutate(side_a_won = winner == 1, 
+         side_b_won = winner == 2)
+```  
+
+2\. Gather the newly created variables into a a key-value pair of `side` and `win_status` variables
+
+```{r}
+events %>%
+  mutate(side_a_won = winner == 1, 
+         side_b_won = winner == 2) %>%
+  gather(side, win_status, side_a_won, side_b_won)
+```  
+
+3\. Modify the `side` variable to include the name of the actor
+
+```{r}
+events %>%
+  mutate(side_a_won = winner == 1, 
+         side_b_won = winner == 2) %>%
+  gather(side, win_status, side_a_won, side_b_won)  %>%
+  mutate(side = ifelse(side == "side_a_won", side_a, side_b))
+```  
+
+4\. Create two separate variables `victory` and `peace` from the `outcome` variable
+
+```{r}
+events %>%
+  mutate(side_a_won = winner == 1, 
+         side_b_won = winner == 2) %>%
+  gather(side, win_status, side_a_won, side_b_won)  %>%
+  mutate(side = ifelse(side == "side_a_won", side_a, side_b)) %>%
+  mutate(victory = outcome == "victory", 
+         peace = outcome == "peace") 
+```  
+
+Steps 5 and 6 are pretty simple and don't necessarily need much explanation
+
+```{r}
+events %>%
+  mutate(side_a_won = winner == 1, 
+         side_b_won = winner == 2) %>%
+  gather(side, win_status, side_a_won, side_b_won)  %>%
+  mutate(side = ifelse(side == "side_a_won", side_a, side_b)) %>%
+  mutate(victory = outcome == "victory", 
+         peace = outcome == "peace") %>%
+  select(event_id, side, win_status, victory, peace) %>%
+  arrange(event_id)
+```  
+
+A slightly different (and perhaps more flexible) approach would be to use `spread()` for reshaping the `outcome` column.
+
+```{r}
+events %>%
+  mutate(side_a_won = winner == 1, 
+         side_b_won = winner == 2,
+         outcome_status = TRUE) %>%
+  gather(side, win_status, ends_with("_won"))  %>%
+  mutate(side = ifelse(side == "side_a_won", side_a, side_b)) %>%
+  spread(outcome, outcome_status, fill = FALSE) %>%
+  select(-c(side_a, side_b, winner)) %>%
+  arrange(event_id)
+```
+

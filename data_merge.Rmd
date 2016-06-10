@@ -1,0 +1,167 @@
+---
+title: "Merging Datasets"
+output: html_document
+---
+
+```{r echo = FALSE, message = FALSE}
+library(ggplot2)
+library(gridExtra)
+library(RColorBrewer)
+library(dplyr)
+```
+
+The only package we need for merging is `tidyr`
+
+```{r}
+library(tidyr)
+```
+
+Clear everything to make sure there's nothing leftover in our environment
+
+```{r}
+rm(list = ls())
+```
+
+```{r echo = FALSE}
+blank_theme <- function(p) {
+  p +
+    theme(legend.position='none',
+          axis.ticks = element_blank(), 
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank())
+}
+```
+
+```{r echo = FALSE}
+draw_table <- function(table_data, title = "") {
+  table_header <- data_frame(
+    x = seq_along(table_data),
+    y = nrow(table_data) +1,
+    text = names(table_data),
+    color_level = "AAA_first_color_level"
+  )
+  
+  table_body <- table_data %>%
+    arrange(desc(row_number())) %>%
+    mutate(y = row_number()) %>%
+    gather(x, text, -y) %>%
+    mutate(color_level = ifelse(is.na(text), "ZZZ_last_color_level", "BBB_somewhere_in_between"),
+           text = ifelse(is.na(text), "NA", text),
+           x = as.numeric(factor(x, levels = unique(names(table_data)))))
+  
+  p <- ggplot(bind_rows(table_header, table_body), aes(x, y, fill = color_level)) + 
+    ggtitle(title) +
+    geom_tile(color = "black") +
+    scale_fill_manual(values = rev(brewer.pal(4, "RdYlBu"))) +
+    geom_text(aes(label = text))
+  
+  blank_theme(p)
+}
+```
+
+You don't need to pay much attention to the code below. We're just creating two simple data frames using `read_csv()` that we can use for different merge operations.
+
+```{r}
+library(readr)
+
+teams <- read_csv(
+"city, team
+Atlanta, Hawks
+Boston, Celtics
+Chicago, Bulls"
+)
+
+cities <- read_csv(
+"city, state
+Atlanta, Georgia
+Boston, Massachusetts
+Detroit, Michigan"
+)
+```
+
+Let's see how we can merge the `teams` dataset with the `cities` dataset.
+
+```{r echo = FALSE, fig.height = 2, fig.width = 8}
+grid.arrange(draw_table(teams, "teams"), draw_table(cities, "cities"), ncol = 2)
+```
+
+### Left Join
+
+```{r results = 'hide'}
+teams %>%
+  left_join(cities, by = "city")
+```
+
+```{r echo = FALSE, fig.height = 2, fig.width = 8}
+draw_table(left_join(teams, cities, by = "city"))
+```
+
+### Right Join
+
+```{r results = 'hide'}
+teams %>%
+  right_join(cities, by = "city")
+```
+
+```{r echo = FALSE, fig.height = 2, fig.width = 8}
+draw_table(right_join(teams, cities, by = "city"))
+```
+
+### Inner Join
+
+```{r results = 'hide'}
+teams %>%
+  inner_join(cities, by = "city")
+```
+
+```{r echo = FALSE, fig.height = 1.6, fig.width = 8}
+draw_table(inner_join(teams, cities, by = "city"))
+```
+
+### Full Join
+
+```{r results = 'hide'}
+teams %>%
+  full_join(cities, by = "city")
+```
+
+```{r echo = FALSE, fig.height = 2.4, fig.width = 8}
+draw_table(full_join(teams, cities, by = "city"))
+```
+
+### Different Column Names
+
+In the previous example both our datasets included a column named `city`. But what if the names of the columns in the two datasets were not the same? For example, consider a `states` dataset that looks like this:
+
+```{r}
+states <- read_csv(
+"code, name
+GA, Georgia
+MI, Michigan
+MA, Massachusetts
+IL, Illinois
+")
+```
+
+What if we were to merge the `cities` dataset with `states`?
+
+```{r echo = FALSE, fig.height = 2, fig.width = 8}
+grid.arrange(draw_table(cities, "cities"), draw_table(states, "states"), ncol = 2)
+```
+
+One option would be to rename the columns so their names would match, but you don't really need to do that. You can simply tell the join functions the mapping between the different names.
+
+```{r results = 'hide'}
+cities %>%
+  left_join(states, by = c("state" = "name"))
+```
+
+In the above example, we're telling `left_join()` to merge using the `state` column from the `cities` data frame and `name` column from the `states` data frame.
+
+```{r echo = FALSE, fig.height = 2, fig.width = 8}
+draw_table(left_join(cities, states, by = c("state" = "name")))
+```
+
