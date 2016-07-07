@@ -1,0 +1,96 @@
+---
+title: "Recoding Data"
+output: html_document
+---
+
+```{r echo=FALSE}
+library(printr)
+```
+
+```{r, message = FALSE}
+library(readr)
+library(dplyr)
+
+```
+
+Suppose our dataset looks something like this
+
+```{r}
+fruits <- read_csv(
+"name, quantity
+gala apples, 3
+red delicious, 2
+bananas, 4
+oranges, 6
+grape-fruits, 2
+blueberries, 20
+straw-berries, 15
+strawberries, 12
+")
+
+fruits
+```
+
+Let's assume that we  wanted to correct the spelling or standardize the value of an existing column. For example, in our case, `strawberries` are sometimes spelled with a hyphen and sometimes without a hyphen. And sometimes the dataset uses specific variety of apples instead of just using `apples` so we need to fix that as well.
+
+### Solution Without `dplyr`
+
+First let's make a copy of the `name` variable to ensure that we don't overwrite the original variable by mistake.
+
+```{r}
+fruits$new_name <- fruits$name
+
+fruits
+```
+
+Now let's fix apples:
+
+```{r}
+fruits$new_name[fruits$name == "gala apples" | fruits$name == "red delicious"] = "apples"
+
+fruits
+```
+
+You can repeat this as many time as you want, and if you have more than one value to compare against then it's best to use `%in%`
+
+```{r}
+fruits$new_name[fruits$name %in% c("grapefruits", "grape-fruits")] = "grapefruits"
+fruits$new_name[fruits$name %in% c("straw-berries", "strawberries")] = "strawberries"
+
+fruits
+```
+
+### The `dplyr` Solution
+
+Here's how you'd do the same with `dplyr` using `mutate` and `ifelse`. First let's recreate the dataset
+
+```{r}
+fruits <- read_csv(
+"name, quantity
+gala apples, 3
+red delicious, 2
+bananas, 4
+oranges, 6
+grape-fruits, 2
+blueberries, 20
+straw-berries, 15
+strawberries, 12
+")
+
+fruits
+```
+
+Then we copy `name` to `new_name`, and call `mutate()` for as many values as we need to recode.
+
+```{r}
+fruits <- fruits %>%
+  mutate(new_name = name) %>%
+  mutate(new_name = ifelse(name %in% c("gala apples", "red delicious"), "apples", new_name)) %>%
+  mutate(new_name = ifelse(name %in% c("grapefruits", "grape-fruits"), "grapefruits", new_name)) %>%
+  mutate(new_name = ifelse(name %in% c("straw-berries", "strawberries"), "strawberries", new_name))
+
+fruits
+```
+
+As you can see, both the solutions give us exactly the same results, so you can use whichever one you prefer. 
+
