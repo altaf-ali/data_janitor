@@ -1,0 +1,47 @@
+---
+title: "Verify Reshape"
+output: html_document
+---
+
+```{r message = FALSE}
+library(readr)
+library(tidyr)
+library(dplyr)
+```
+
+```{r}
+wdi <- read_csv("http://ucl.ac.uk/~uctqiax/data/wdi.csv", na = "..")
+```
+
+```{r}
+wdi_long <- wdi %>%
+  filter(Country.Code != "") %>% 
+  gather(Year, Value, starts_with("X")) %>% 
+  select(Country.Code, Country.Name, Year, Series.Code, Value) %>%
+  spread(Series.Code, Value)  
+
+wdi_long
+```
+
+The code below can be used to verify that we didn't make a mistake while reshaping the WDI dataset. Make sure to run this code **before** you rename the columns and before stripping the numeric `year` column.
+
+```{r}
+
+columns_to_verify <- unique(wdi$Series.Code)
+
+for (i in seq(1, nrow(wdi_long))) {
+  country_code <- wdi_long[i,]$Country.Code
+  year <- wdi_long[i,]$Year
+  long_row <- subset(wdi_long, Country.Code == country_code & Year == year)
+  for (column in columns_to_verify) {
+    wide_row <- subset(wdi,  Country.Code == country_code & Series.Code == column)
+    if (long_row[1,column] == wide_row[1,year]) {
+      # uncommment the next line if you want to see a message for every value compared
+      # print(paste("Everything OK at row ", i, "country =", country_code, "year =", year, "column =", column))
+    } else {
+      print(paste("Mismatch at row ", i, "country =", country_code, "year =", year, "column =", column))
+    }
+  }
+}
+```
+

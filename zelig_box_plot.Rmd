@@ -1,0 +1,77 @@
+---
+title: "Box Plot with Zelig Simulations"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE}
+library(foreign)
+library(Zelig)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(Hmisc)
+```
+
+Load dataset
+
+```{r}
+world.data <- read.dta("http://uclspp.github.io/PUBLG100/data/QoG2012.dta")
+```
+
+Remove observations with missing values
+
+```{r}
+world.data <- world.data %>%
+  filter(!is.na(undp_hdi), !is.na(former_col))
+```
+
+Estimate a model using Zelig
+
+```{r}
+model <- zelig(undp_hdi ~ former_col, model = "ls", data = world.data, cite = FALSE)
+summary(model)
+```
+
+Set explanatory variables
+
+```{r}
+model_matrix <- setx(model, former_col = range(world.data$former_col))
+```
+
+Run simulation
+
+```{r}
+sim_obj <- sim(model, model_matrix)
+summary(sim_obj)
+```
+
+Extract quantities of interest from the simulations
+
+```{r}
+sim_matrix <- as.data.frame(simulation.matrix(sim_obj, which = summary(sim_obj)$titles[1]))
+colnames(sim_matrix) = c("Not_Former_Colony", "Former_Colony")
+```
+
+Reshape so we can plot it easily
+
+```{r}
+sim_matrix <- sim_matrix %>%
+  gather(Colony_Status, Prediction, Not_Former_Colony, Former_Colony) 
+```
+
+Create box plot with ggplot
+
+```{r}
+ggplot(sim_matrix, aes(x = Colony_Status, y = Prediction)) +
+  geom_boxplot(fill = "grey", colour = "black") + 
+  stat_summary(fun.data = mean_cl_boot, geom = "errorbar", colour = "red") + 
+  stat_summary(fun.y = mean, geom = "point", colour = "red") +
+  xlab("Colonial Past")
+```
+
+
+

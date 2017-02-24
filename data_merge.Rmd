@@ -5,15 +5,15 @@ output: html_document
 
 ```{r echo = FALSE, message = FALSE}
 library(ggplot2)
+library(tidyr)
 library(gridExtra)
 library(RColorBrewer)
-library(dplyr)
 ```
 
-The only package we need for merging is `tidyr`
+The only package we need for merging is `dplyr`
 
-```{r}
-library(tidyr)
+```{r message = FALSE}
+library(dplyr)
 ```
 
 Clear everything to make sure there's nothing leftover in our environment
@@ -62,23 +62,21 @@ draw_table <- function(table_data, title = "") {
 }
 ```
 
-You don't need to pay much attention to the code below. We're just creating two simple data frames using `read_csv()` that we can use for different merge operations.
+You don't need to pay much attention to the code below. We're just creating two simple data frames using `frame_data()` that we can use for different merge operations.
 
 ```{r}
-library(readr)
-
-teams <- read_csv(
-"city, team
-Atlanta, Hawks
-Boston, Celtics
-Chicago, Bulls"
+teams <- frame_data(
+  ~city, ~team,
+  "Atlanta", "Hawks",
+  "Boston", "Celtics",
+  "Chicago", "Bulls"
 )
 
-cities <- read_csv(
-"city, state
-Atlanta, Georgia
-Boston, Massachusetts
-Detroit, Michigan"
+cities <- frame_data(
+  ~city, ~state,
+  "Atlanta", "Georgia",
+  "Boston", "Massachusetts",
+  "Detroit", "Michigan"
 )
 ```
 
@@ -137,13 +135,13 @@ draw_table(full_join(teams, cities, by = "city"))
 In the previous example both our datasets included a column named `city`. But what if the names of the columns in the two datasets were not the same? For example, consider a `states` dataset that looks like this:
 
 ```{r}
-states <- read_csv(
-"code, name
-GA, Georgia
-MI, Michigan
-MA, Massachusetts
-IL, Illinois
-")
+states <- frame_data(
+  ~code, ~name,
+  "GA", "Georgia",
+  "MI", "Michigan",
+  "MA", "Massachusetts",
+  "IL", "Illinois"
+)
 ```
 
 What if we were to merge the `cities` dataset with `states`?
