@@ -51,16 +51,11 @@ summary(sim_obj)
 
 Extract quantities of interest from the simulations
 
+NOTE: Colony_Status is the second column in the dataframe returned from `zelig_qi_to_df`, hence `Colony_Status = 2` below:
 ```{r}
-sim_matrix <- as.data.frame(simulation.matrix(sim_obj, which = summary(sim_obj)$titles[1]))
-colnames(sim_matrix) = c("Not_Former_Colony", "Former_Colony")
-```
-
-Reshape so we can plot it easily
-
-```{r}
-sim_matrix <- sim_matrix %>%
-  gather(Colony_Status, Prediction, Not_Former_Colony, Former_Colony) 
+sim_matrix <- zelig_qi_to_df(sim_obj) %>% 
+  select(Colony_Status = 2, Prediction = expected_value) %>% 
+  mutate(Colony_Status = recode(Colony_Status, `0` = "Not_Former_Colony", `1` = "Former_Colony"))
 ```
 
 Create box plot with ggplot

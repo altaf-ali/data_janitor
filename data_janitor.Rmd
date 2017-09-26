@@ -14,15 +14,13 @@ The content presented here is somewhat based on the <a href="http://bit.ly/hadle
 Run the following script to make sure all necessary packages are installed
 
 ```{r message = FALSE}
-source("http://www.ucl.ac.uk/~uctqiax/PUBLG100/setup.R")
+#source("http://www.ucl.ac.uk/~uctqiax/PUBLG100/setup.R")
 ```
 
 Now load these packages
 
 ```{r message = FALSE}
-library(readr)
-library(tidyr)
-library(dplyr)
+library(tidyverse)
 ```
 
 And clear the environment to make sure there are no leftover variables
@@ -263,12 +261,12 @@ flights %>%
 
 ### Reshaping
 
-Remember the wonderful WDI Dataset from Term 1? It's fairly common for datasets from public sources to come in wide formats that need to be reshaped. Let's go over the WDI example step by step to see how that's done.
+It's fairly common for datasets from public sources to come in wide formats that need to be reshaped. The World Development Indicators (WDI) is one such dataset that requires reshaping before we can analyse it. Let's go over the steps to see how we can reshape the WDI dataset.
 
 We're using a tiny sample of the original WDI dataset here to simplify the tasks. Let's load the dataset and see what it looks like. 
 
 ```{r}
-wdi <- read_csv("http://ucl.ac.uk/~uctqiax/data/wdi.csv", na = "..")
+wdi <- read_csv("./data/wdi.csv", na = "..")
 
 wdi
 ```
